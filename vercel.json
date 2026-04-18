@@ -3,6 +3,10 @@
   "outputDirectory": "dist/addressbook-frontend/browser",
   "framework": "angular",
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "http://addressbook.us-east-1.elasticbeanstalk.com/api/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
