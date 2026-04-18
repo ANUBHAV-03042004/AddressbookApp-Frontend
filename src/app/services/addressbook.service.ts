@@ -5,7 +5,7 @@ import { AddressBook, Contact, ContactDTO, ApiResponse, ContactCountMap } from '
 
 @Injectable({ providedIn: 'root' })
 export class AddressbookService {
-  private api = 'http://addressbook.us-east-1.elasticbeanstalk.com/api';
+ private api = '/api';
 
   constructor(private http: HttpClient) {}
 

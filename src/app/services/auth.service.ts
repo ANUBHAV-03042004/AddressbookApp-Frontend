@@ -10,7 +10,7 @@ const USER_KEY  = 'cb_user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private api = 'http://addressbook.us-east-1.elasticbeanstalk.com/api/auth';
+private api = '/api/auth';
 
   constructor(private http: HttpClient, private router: Router) {}
 
