@@ -1,0 +1,412 @@
+<!-- Floating bubbles background -->
+<div class="floating-shapes" aria-hidden="true">
+  <span *ngFor="let b of bubbles" [ngStyle]="b"></span>
+</div>
+
+<div class="page-shell">
+
+  <!-- ── NAVBAR ───────────────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="nav-brand">
+        <div class="nav-logo"><img src="/icon.png" alt="ContactBook logo"></div>
+        <div class="nav-brand-text">
+          <span class="nav-title">ContactBook</span>
+          <span class="nav-sub">Address Book Manager</span>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <div class="user-pill" (click)="toggleUserMenu()">
+          <div class="user-avatar">{{ (username[0]||'U').toUpperCase() }}</div>
+          <span class="user-name">{{ username }}</span>
+          <span class="user-caret">▾</span>
+        </div>
+
+        <div class="user-menu" *ngIf="showUserMenu">
+          <div class="user-menu-header">
+            <div class="user-menu-avatar">{{ (username[0]||'U').toUpperCase() }}</div>
+            <div>
+              <div class="user-menu-name">{{ username }}</div>
+              <div class="user-menu-role">Member</div>
+            </div>
+          </div>
+          <div class="user-menu-divider"></div>
+          <button class="user-menu-item logout" (click)="logout()">
+            <span>🚪</span> Sign Out
+          </button>
+        </div>
+
+        <div class="menu-backdrop" *ngIf="showUserMenu" (click)="showUserMenu = false"></div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── MAIN LAYOUT ───────────────────────────────────────────────────── -->
+  <div class="app-wrapper">
+    <div class="layout">
+
+      <!-- SIDEBAR -->
+      <div class="glass-card sidebar">
+        <div class="sidebar-title"><span>📚</span> Address Books</div>
+
+        <ul class="book-list" *ngIf="books.length; else noBooks">
+          <li
+            *ngFor="let book of books"
+            class="book-item"
+            [class.active]="activeBook?.id === book.id"
+            (click)="selectBook(book)"
+          >
+            <div class="book-item-name">
+              <span>{{ getEmoji(book.name) }}</span>
+              <span>{{ book.name }}</span>
+            </div>
+            <div class="book-item-right">
+              <span class="book-badge">{{ book.contactCount ?? '—' }}</span>
+              <button class="book-delete-btn"
+                (click)="$event.stopPropagation(); deleteBook(book)"
+                title="Delete book">✕</button>
+            </div>
+          </li>
+        </ul>
+        <ng-template #noBooks>
+          <div class="empty-mini">No books yet — create one! 📖</div>
+        </ng-template>
+
+        <div class="divider"></div>
+        <div class="sidebar-title" style="margin-bottom:10px;"><span>➕</span> New Book</div>
+        <div class="new-book-form">
+          <input
+            class="input-glass"
+            [(ngModel)]="newBookName"
+            placeholder="Book name..."
+            (keydown.enter)="createBook()"
+          />
+          <button class="btn btn-primary" (click)="createBook()">Add</button>
+        </div>
+
+        <!-- Global Tools -->
+        <div class="divider" style="margin-top:18px;"></div>
+        <div class="sidebar-title"><span>🔧</span> Global Tools</div>
+        <div class="global-tools">
+          <button class="tool-btn" [class.active]="activePanel==='search'" (click)="setPanel('search')">
+            <span>🔍</span> Search by Name
+          </button>
+          <button class="tool-btn" [class.active]="activePanel==='filter'" (click)="setPanel('filter')">
+            <span>📍</span> Filter by City/State
+          </button>
+          <button class="tool-btn" [class.active]="activePanel==='count'" (click)="setPanel('count')">
+            <span>📊</span> Count Contacts
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN AREA -->
+      <div class="glass-card main-area">
+
+        <!-- ── CONTACTS PANEL ─────────────────────────────────────────── -->
+        <ng-container *ngIf="activePanel === 'contacts'">
+          <!-- No book selected -->
+          <div class="no-book-selected" *ngIf="!activeBook">
+            <div class="big-emoji">📖</div>
+            <h2>Pick an address book!</h2>
+            <p>Select a book from the sidebar to manage contacts,<br>or create a new one to get started.</p>
+            <p class="hint-text">Use the <strong>Global Tools</strong> below to search across all books.</p>
+          </div>
+
+          <!-- Book content -->
+          <div *ngIf="activeBook">
+            <div class="main-area-header">
+              <div class="main-title">
+                <span>{{ getEmoji(activeBook.name) }}</span>
+                <span>{{ activeBook.name }}</span>
+              </div>
+              <div class="main-controls">
+                <div class="search-wrap">
+                  <span class="search-icon">🔍</span>
+                  <input
+                    class="input-glass"
+                    [(ngModel)]="searchQuery"
+                    (ngModelChange)="filterContacts()"
+                    placeholder="Search contacts..."
+                  />
+                </div>
+                <select class="sort-select" [(ngModel)]="sortOrder" (ngModelChange)="loadContacts()">
+                  <option value="default">Default order</option>
+                  <option value="name">Sort by name</option>
+                  <option value="location">Sort by city</option>
+                </select>
+                <button class="btn btn-blue" (click)="openAdd()">+ Add Contact</button>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-row">
+              <div class="stat-pill">
+                <span class="dot" style="background:#1565C0"></span>
+                {{ filteredContacts.length }} contact{{ filteredContacts.length !== 1 ? 's' : '' }}
+              </div>
+              <div class="stat-pill" *ngFor="let city of uniqueCities.slice(0,4)">
+                <span class="dot" style="background:#FF7043"></span>{{ city }}
+              </div>
+              <div class="stat-pill" *ngIf="uniqueCities.length > 4">+{{ uniqueCities.length - 4 }} more</div>
+            </div>
+
+            <!-- Contacts grid -->
+            <div class="contacts-grid" *ngIf="filteredContacts.length; else noContacts">
+              <div class="contact-card" *ngFor="let c of filteredContacts">
+                <div class="contact-card-top">
+                  <div class="contact-avatar" [style.background]="getColor(c.firstName, c.lastName)">
+                    {{ getInitials(c.firstName, c.lastName) }}
+                  </div>
+                  <div class="contact-info">
+                    <div class="contact-name">{{ c.firstName }} {{ c.lastName }}</div>
+                    <div class="contact-details">
+                      <div class="contact-detail" *ngIf="c.address">
+                        <span class="icon">🏠</span><span>{{ c.address }}</span>
+                      </div>
+                      <div class="contact-detail" *ngIf="c.city || c.state">
+                        <span class="icon">📍</span><span>{{ formatLocation(c) }}</span>
+                      </div>
+                      <div class="contact-detail" *ngIf="c.phoneNumber">
+                        <span class="icon">📞</span><span>{{ c.phoneNumber }}</span>
+                      </div>
+                      <div class="contact-detail" *ngIf="c.email">
+                        <span class="icon">✉️</span><span class="email-break">{{ c.email }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="contact-actions">
+                  <button class="btn btn-ghost btn-sm" (click)="openEdit(c)">✏️ Edit</button>
+                  <button class="btn btn-danger" (click)="deleteContact(c)">🗑 Delete</button>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #noContacts>
+              <div class="empty-state">
+                <div class="emoji">🤷</div>
+                <h3>No contacts found!</h3>
+                <p>Add a contact or try a different search.</p>
+              </div>
+            </ng-template>
+          </div>
+        </ng-container>
+
+        <!-- ── GLOBAL SEARCH PANEL ────────────────────────────────────── -->
+        <ng-container *ngIf="activePanel === 'search'">
+          <div class="panel-header">
+            <div class="panel-title">🔍 Search Contacts by Name</div>
+            <p class="panel-desc">Search across <strong>all address books</strong> by first or last name.</p>
+          </div>
+          <div class="panel-form">
+            <div class="search-wrap" style="flex:1;">
+              <span class="search-icon">🔍</span>
+              <input
+                class="input-glass"
+                [(ngModel)]="globalSearchQuery"
+                placeholder="Enter name to search..."
+                (keydown.enter)="runGlobalSearch()"
+              />
+            </div>
+            <button class="btn btn-primary" (click)="runGlobalSearch()" [disabled]="globalSearchLoading">
+              {{ globalSearchLoading ? 'Searching…' : 'Search' }}
+            </button>
+          </div>
+
+          <div class="panel-results" *ngIf="globalSearchResults.length">
+            <div class="results-label">{{ globalSearchResults.length }} result{{ globalSearchResults.length !== 1 ? 's' : '' }} found</div>
+            <div class="contacts-grid">
+              <div class="contact-card" *ngFor="let c of globalSearchResults">
+                <div class="contact-card-top">
+                  <div class="contact-avatar" [style.background]="getColor(c.firstName, c.lastName)">
+                    {{ getInitials(c.firstName, c.lastName) }}
+                  </div>
+                  <div class="contact-info">
+                    <div class="contact-name">{{ c.firstName }} {{ c.lastName }}</div>
+                    <div class="contact-details">
+                      <div class="contact-detail" *ngIf="c.address">
+                        <span class="icon">🏠</span><span>{{ c.address }}</span>
+                      </div>
+                      <div class="contact-detail" *ngIf="c.city || c.state">
+                        <span class="icon">📍</span><span>{{ formatLocation(c) }}</span>
+                      </div>
+                      <div class="contact-detail" *ngIf="c.phoneNumber">
+                        <span class="icon">📞</span><span>{{ c.phoneNumber }}</span>
+                      </div>
+                      <div class="contact-detail" *ngIf="c.email">
+                        <span class="icon">✉️</span><span class="email-break">{{ c.email }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="empty-state" *ngIf="!globalSearchLoading && globalSearchResults.length === 0 && globalSearchQuery">
+            <div class="emoji">🤷</div>
+            <h3>No results</h3>
+            <p>Try a different name.</p>
+          </div>
+        </ng-container>
+
+        <!-- ── FILTER PANEL ───────────────────────────────────────────── -->
+        <ng-container *ngIf="activePanel === 'filter'">
+          <div class="panel-header">
+            <div class="panel-title">📍 Filter Contacts by City / State</div>
+            <p class="panel-desc">Find contacts across <strong>all address books</strong> by their location.</p>
+          </div>
+          <div class="panel-form">
+            <select class="sort-select" [(ngModel)]="filterType">
+              <option value="city">City</option>
+              <option value="state">State</option>
+            </select>
+            <div class="search-wrap" style="flex:1;">
+              <span class="search-icon">📍</span>
+              <input
+                class="input-glass"
+                [(ngModel)]="filterValue"
+                [placeholder]="filterType === 'city' ? 'Enter city name…' : 'Enter state name…'"
+                (keydown.enter)="runFilter()"
+              />
+            </div>
+            <button class="btn btn-primary" (click)="runFilter()" [disabled]="filterLoading">
+              {{ filterLoading ? 'Loading…' : 'Filter' }}
+            </button>
+          </div>
+
+          <div class="panel-results" *ngIf="filterResults.length">
+            <div class="results-label">{{ filterResults.length }} contact{{ filterResults.length !== 1 ? 's' : '' }} found in <strong>{{ filterValue }}</strong></div>
+            <div class="contacts-grid">
+              <div class="contact-card" *ngFor="let c of filterResults">
+                <div class="contact-card-top">
+                  <div class="contact-avatar" [style.background]="getColor(c.firstName, c.lastName)">
+                    {{ getInitials(c.firstName, c.lastName) }}
+                  </div>
+                  <div class="contact-info">
+                    <div class="contact-name">{{ c.firstName }} {{ c.lastName }}</div>
+                    <div class="contact-details">
+                      <div class="contact-detail" *ngIf="c.address">
+                        <span class="icon">🏠</span><span>{{ c.address }}</span>
+                      </div>
+                      <div class="contact-detail" *ngIf="c.city || c.state">
+                        <span class="icon">📍</span><span>{{ formatLocation(c) }}</span>
+                      </div>
+                      <div class="contact-detail" *ngIf="c.phoneNumber">
+                        <span class="icon">📞</span><span>{{ c.phoneNumber }}</span>
+                      </div>
+                      <div class="contact-detail" *ngIf="c.email">
+                        <span class="icon">✉️</span><span class="email-break">{{ c.email }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="empty-state" *ngIf="!filterLoading && filterResults.length === 0 && filterValue">
+            <div class="emoji">🤷</div>
+            <h3>No contacts found</h3>
+            <p>Try a different {{ filterType }}.</p>
+          </div>
+        </ng-container>
+
+        <!-- ── COUNT PANEL ────────────────────────────────────────────── -->
+        <ng-container *ngIf="activePanel === 'count'">
+          <div class="panel-header">
+            <div class="panel-title">📊 Count Contacts by City / State</div>
+            <p class="panel-desc">Get aggregate contact counts across all address books.</p>
+          </div>
+          <div class="panel-form">
+            <select class="sort-select" [(ngModel)]="countFilterType">
+              <option value="city">City</option>
+              <option value="state">State</option>
+            </select>
+            <div class="search-wrap" style="flex:1;">
+              <span class="search-icon">📊</span>
+              <input
+                class="input-glass"
+                [(ngModel)]="countFilterValue"
+                [placeholder]="countFilterType === 'city' ? 'Enter city name…' : 'Enter state name…'"
+                (keydown.enter)="runCount()"
+              />
+            </div>
+            <button class="btn btn-primary" (click)="runCount()" [disabled]="countLoading">
+              {{ countLoading ? 'Counting…' : 'Count' }}
+            </button>
+          </div>
+
+          <div class="count-results" *ngIf="countResultEntries.length">
+            <div class="results-label">Results for <strong>{{ countFilterValue }}</strong></div>
+            <div class="count-grid">
+              <div class="count-card" *ngFor="let entry of countResultEntries">
+                <div class="count-label">{{ entry.key }}</div>
+                <div class="count-value">{{ entry.value }}</div>
+                <div class="count-unit">contact{{ entry.value !== 1 ? 's' : '' }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="empty-state" *ngIf="!countLoading && countResultEntries.length === 0 && countFilterValue">
+            <div class="emoji">📭</div>
+            <h3>No data found</h3>
+            <p>Try a different {{ countFilterType }}.</p>
+          </div>
+        </ng-container>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONTACT MODAL ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-title">{{ editingContact ? '✏️ Edit Contact' : '➕ Add Contact' }}</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">First Name *</label>
+        <input class="input-glass" [(ngModel)]="form.firstName" placeholder="John" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name *</label>
+        <input class="input-glass" [(ngModel)]="form.lastName" placeholder="Doe" />
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Address *</label>
+        <input class="input-glass" [(ngModel)]="form.address" placeholder="123 Main Street" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">City *</label>
+        <input class="input-glass" [(ngModel)]="form.city" placeholder="Mumbai" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">State *</label>
+        <input class="input-glass" [(ngModel)]="form.state" placeholder="Maharashtra" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">ZIP (6 digits)</label>
+        <input class="input-glass" [(ngModel)]="form.zip" placeholder="400001" maxlength="6" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone (10 digits)</label>
+        <input class="input-glass" [(ngModel)]="form.phoneNumber" placeholder="9876543210" maxlength="10" />
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Email</label>
+        <input class="input-glass" [(ngModel)]="form.email" placeholder="john@example.com" type="email" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" (click)="closeModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveContact()">
+        💾 {{ editingContact ? 'Update' : 'Save' }} Contact
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ─────────────────────────────────────────────────────────────── -->
+<div class="toast" [class.show]="toast.show" [class.success]="toast.type==='success'" [class.error]="toast.type==='error'">
+  {{ toast.msg }}
+</div>

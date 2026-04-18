@@ -1,0 +1,126 @@
+<div class="page-bg" aria-hidden="true">
+  <span class="bubble" *ngFor="let b of bubbles"
+    [style.width]="b.width" [style.height]="b.width"
+    [style.left]="b.left"
+    [style.animationDuration]="b.animationDuration"
+    [style.animationDelay]="b.animationDelay">
+  </span>
+</div>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="logo-ring">
+      <img src="/icon.png" alt="ContactBook" class="logo-img">
+    </div>
+
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-sub">Join ContactBook — it's free!</p>
+
+    <div class="alert alert-error" *ngIf="errorMsg">
+      <span>⚠️</span> {{ errorMsg }}
+    </div>
+
+    <form (ngSubmit)="submit()" autocomplete="on" novalidate>
+
+      <!-- Username -->
+      <div class="form-group">
+        <label class="form-label" for="reg-username">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input
+            id="reg-username"
+            name="username"
+            class="input-glass"
+            [(ngModel)]="username"
+            placeholder="choose_a_username"
+            autocomplete="username"
+          />
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label class="form-label" for="reg-email">Email</label>
+        <div class="input-wrap">
+          <span class="input-icon">✉️</span>
+          <input
+            id="reg-email"
+            name="email"
+            class="input-glass"
+            [(ngModel)]="email"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+          />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label class="form-label" for="reg-password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔑</span>
+          <input
+            id="reg-password"
+            name="password"
+            class="input-glass"
+            [type]="showPass ? 'text' : 'password'"
+            [(ngModel)]="password"
+            placeholder="min 6 characters"
+            autocomplete="new-password"
+          />
+          <button class="eye-btn" type="button" (click)="showPass = !showPass">
+            {{ showPass ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <!-- Strength meter -->
+        <div class="strength-bar" *ngIf="password">
+          <div class="strength-track">
+            <div class="strength-fill"
+              [style.width]="(passwordStrength.level / 3 * 100) + '%'"
+              [style.background]="passwordStrength.color">
+            </div>
+          </div>
+          <span class="strength-label" [style.color]="passwordStrength.color">
+            {{ passwordStrength.label }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label class="form-label" for="reg-confirm">Confirm Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input
+            id="reg-confirm"
+            name="confirm"
+            class="input-glass"
+            [type]="showConf ? 'text' : 'password'"
+            [(ngModel)]="confirm"
+            placeholder="repeat password"
+            autocomplete="new-password"
+            [class.mismatch]="confirm && confirm !== password"
+          />
+          <button class="eye-btn" type="button" (click)="showConf = !showConf">
+            {{ showConf ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <div class="match-hint" *ngIf="confirm && confirm !== password">
+          Passwords don't match
+        </div>
+      </div>
+
+      <button class="btn-submit" type="submit" [class.loading]="loading" [disabled]="loading">
+        <span class="btn-spinner" *ngIf="loading"></span>
+        <span *ngIf="!loading">Create Account →</span>
+      </button>
+
+    </form>
+
+    <p class="auth-switch">
+      Already have an account?
+      <a routerLink="/login" class="auth-link">Sign in</a>
+    </p>
+  </div>
+</div>

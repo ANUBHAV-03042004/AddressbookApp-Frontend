@@ -1,0 +1,74 @@
+<div class="page-bg" aria-hidden="true">
+  <span class="bubble" *ngFor="let b of bubbles"
+    [style.width]="b.width" [style.height]="b.width"
+    [style.left]="b.left"
+    [style.animationDuration]="b.animationDuration"
+    [style.animationDelay]="b.animationDelay">
+  </span>
+</div>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <!-- Logo -->
+    <div class="logo-ring">
+      <img src="/icon.png" alt="ContactBook" class="logo-img">
+    </div>
+
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Sign in to your ContactBook</p>
+
+    <!-- Error -->
+    <div class="alert alert-error" *ngIf="errorMsg">
+      <span>⚠️</span> {{ errorMsg }}
+    </div>
+
+    <!-- Proper <form> fixes the DOM/autofill warning -->
+    <form (ngSubmit)="submit()" autocomplete="on" novalidate>
+
+      <div class="form-group">
+        <label class="form-label" for="login-username">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input
+            id="login-username"
+            name="username"
+            class="input-glass"
+            [(ngModel)]="username"
+            placeholder="your_username"
+            autocomplete="username"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔑</span>
+          <input
+            id="login-password"
+            name="password"
+            class="input-glass"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+          <button class="eye-btn" type="button" (click)="showPassword = !showPassword">
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-submit" type="submit" [class.loading]="loading" [disabled]="loading">
+        <span class="btn-spinner" *ngIf="loading"></span>
+        <span *ngIf="!loading">Sign In →</span>
+      </button>
+
+    </form>
+
+    <p class="auth-switch">
+      Don't have an account?
+      <a routerLink="/register" class="auth-link">Create one free</a>
+    </p>
+  </div>
+</div>
