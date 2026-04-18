@@ -145,7 +145,7 @@ Spring Boot API (AWS Elastic Beanstalk)
 MySQL (AWS RDS — addressbook_db)
 ```
 
-On **GitHub Pages**, the API base URL must be set to the full EB URL directly (no proxy). On **Vercel**, the `vercel.json` rewrite proxies `/api/*` to the EB backend, so the frontend uses `/api` as a relative base path.
+ On **Vercel**, the `vercel.json` rewrite proxies `/api/*` to the EB backend, so the frontend uses `/api` as a relative base path.
 
 ### API Response Unwrapping
 
@@ -262,18 +262,6 @@ Pushes to `main` trigger a Vercel deployment automatically. The `vercel.json` at
 ```
 
 The first rewrite proxies all API calls server-side, avoiding CORS issues entirely. The second rewrite enables Angular's client-side routing (all paths fall through to `index.html`).
-
-### GitHub Pages (legacy — GitHub Actions)
-
-The workflow at `.github/workflows/deploy.yml` triggers on every push to `main`:
-
-1. Checks out the repo
-2. Sets up Node 20
-3. Runs `npm ci`
-4. Runs `npm run build:prod`
-5. Deploys `dist/addressbook-frontend/browser` to the `gh-pages` branch via `JamesIves/github-pages-deploy-action@v4`
-
-> **Note:** GitHub Pages does not support server-side rewrites, so API calls on the GH Pages build hit the Elastic Beanstalk URL directly. The backend's CORS config must include `https://anubhav-03042004.github.io` as an allowed origin.
 
 ---
 
