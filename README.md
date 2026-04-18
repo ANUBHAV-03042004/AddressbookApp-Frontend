@@ -1,4 +1,4 @@
-# ContactBook — Address Book Manager Frontend
+# ContactBook — Address Book App Frontend
 
 An Angular 17 single-page application for managing address books and contacts, connected to a Spring Boot REST API deployed on AWS Elastic Beanstalk.
 
